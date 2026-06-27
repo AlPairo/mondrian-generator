@@ -279,6 +279,8 @@
         <option value="albers">Josef Albers (Homage to the Square)</option>
         <option value="kelly">Ellsworth Kelly (Hard-edge)</option>
         <option value="lewitt">Sol LeWitt (Wall Drawings)</option>
+        <option value="stella">Frank Stella (Minimalism)</option>
+        <option value="huszar">Vilmos Huszár (De Stijl)</option>
       </select>
     </div>
 
@@ -657,6 +659,20 @@ Sol LeWitt is best known for his *Wall Drawings* — instructions written by LeW
         movement: 'Conceptual art, Minimalism',
         description: 'American artist whose Wall Drawings center on ideas rather than objects. Instructions written by LeWitt are executed by draftsmen, making the concept the artwork and the physical output temporary.',
         keyWorks: ['Wall Drawing #11 (1969)', 'Wall Drawing #122 (1972)']
+      },
+      stella: {
+        name: 'Frank Stella',
+        years: '1936–',
+        movement: 'Minimalism, Post-painterly abstraction',
+        description: 'American painter whose career spans from the reductive Black Paintings of the late 1950s to complex three-dimensional reliefs. His dictum "What you see is what you see" rejects symbolic interpretation.',
+        keyWorks: ['The Marriage of Reason and Squalor, II (1959)', 'Harran II (1967)']
+      },
+      huszar: {
+        name: 'Vilmos Huszár',
+        years: '1884–1960',
+        movement: 'De Stijl',
+        description: 'Hungarian-Dutch founding artist of De Stijl. His painted work is visually close to Mondrian but tends toward calmer, more meditative balance with a preference for one dominant large block and smaller satellite blocks.',
+        keyWorks: ['Composition with Yellow, Blue and Red (1920)', 'Mechano-Dancer (1922)']
       }
     };
 
@@ -893,6 +909,8 @@ Sol LeWitt is best known for his *Wall Drawings* — instructions written by LeW
         case 'albers': generateAlbers(); break;
         case 'kelly': generateKelly(); break;
         case 'lewitt': generateLeWitt(); break;
+        case 'stella': generateStella(); break;
+        case 'huszar': generateHuszar(); break;
         default: generateMondrian(); break;
       }
     }
@@ -1299,6 +1317,123 @@ Sol LeWitt is best known for his *Wall Drawings* — instructions written by LeW
       for (let r = 0; r <= rows; r++) {
         let y = r * (cellH + gap) + gap / 2;
         line(0, y, s, y);
+      }
+    }
+
+    // === STELLA ===
+    function generateStella() {
+      background(PARAMS.bgColor);
+      let s = PARAMS.canvasSize;
+      let mode = random() > 0.5 ? 'parallel' : 'concentric';
+
+      if (mode === 'parallel') {
+        // Irregular polygon with parallel interior lines
+        let margin = s * 0.1;
+        let w = s - margin * 2;
+        let h = s * random(0.5, 0.8);
+        let x = margin;
+        let y = (s - h) / 2;
+
+        // Slightly irregular vertices
+        let vertices = [
+          { x: x + random(-10, 10), y: y + random(-10, 10) },
+          { x: x + w + random(-10, 10), y: y + random(-10, 10) },
+          { x: x + w + random(-10, 10), y: y + h + random(-10, 10) },
+          { x: x + random(-10, 10), y: y + h + random(-10, 10) }
+        ];
+
+        let numStripes = floor(random(5, 12));
+        let stripeColors = [PARAMS.lineColor, PARAMS.bgColor];
+        if (random() < 0.6) stripeColors.push(PARAMS.red);
+        if (random() < 0.6) stripeColors.push(PARAMS.blue);
+        if (random() < 0.6) stripeColors.push(PARAMS.yellow);
+
+        for (let i = 0; i < numStripes; i++) {
+          let t1 = i / numStripes;
+          let t2 = (i + 1) / numStripes;
+          fill(stripeColors[i % stripeColors.length]);
+          noStroke();
+          beginShape();
+          vertex(lerp(vertices[0].x, vertices[3].x, t1), lerp(vertices[0].y, vertices[3].y, t1));
+          vertex(lerp(vertices[0].x, vertices[3].x, t2), lerp(vertices[0].y, vertices[3].y, t2));
+          vertex(lerp(vertices[1].x, vertices[2].x, t2), lerp(vertices[1].y, vertices[2].y, t2));
+          vertex(lerp(vertices[1].x, vertices[2].x, t1), lerp(vertices[1].y, vertices[2].y, t1));
+          endShape(CLOSE);
+        }
+
+        // Outer contour
+        stroke(PARAMS.lineColor);
+        strokeWeight(PARAMS.lineWeight);
+        noFill();
+        beginShape();
+        for (let v of vertices) vertex(v.x, v.y);
+        endShape(CLOSE);
+      } else {
+        // Concentric irregular shapes
+        let numShapes = floor(random(4, 8));
+        let margin = s * 0.05;
+        let palette = [PARAMS.red, PARAMS.blue, PARAMS.yellow, PARAMS.lineColor, PARAMS.grayColor];
+
+        for (let i = 0; i < numShapes; i++) {
+          let ratio = 1 - (i / numShapes) * 0.85;
+          let w = (s - margin * 2) * ratio;
+          let h = w * random(0.7, 1.0);
+          let x = (s - w) / 2 + random(-15, 15);
+          let y = (s - h) / 2 + random(-15, 15);
+
+          fill(palette[i % palette.length]);
+          noStroke();
+          beginShape();
+          vertex(x + random(-8, 8), y + random(-8, 8));
+          vertex(x + w + random(-8, 8), y + random(-8, 8));
+          vertex(x + w + random(-8, 8), y + h + random(-8, 8));
+          vertex(x + random(-8, 8), y + h + random(-8, 8));
+          endShape(CLOSE);
+        }
+      }
+    }
+
+    // === HUSZÁR ===
+    function generateHuszar() {
+      cells = [];
+      // Lower split chance for calmer, fewer cells
+      let oldSplit = PARAMS.splitChance;
+      PARAMS.splitChance = 0.45;
+      subdivide(0, 0, PARAMS.canvasSize, PARAMS.canvasSize);
+      PARAMS.splitChance = oldSplit;
+
+      // Force gray to be part of the palette for this style
+      let oldUseGray = PARAMS.useGray;
+      PARAMS.useGray = true;
+      ensureMinimumColor();
+      PARAMS.useGray = oldUseGray;
+
+      // Sort cells by area; largest first
+      cells.sort((a, b) => b.w * b.h - a.w * a.h);
+
+      // Ensure the largest cell has color (Huszár's signature dominant block)
+      if (cells.length > 0 && !cells[0].color) {
+        cells[0].color = pickColorForced();
+      }
+
+      background(PARAMS.bgColor);
+
+      // Draw colored cells
+      for (let c of cells) {
+        if (c.color) {
+          fill(c.color);
+          noStroke();
+          let inset = PARAMS.lineWeight / 2;
+          rect(c.x + inset, c.y + inset, c.w - inset * 2, c.h - inset * 2);
+        }
+      }
+
+      // Draw grid lines
+      stroke(PARAMS.lineColor);
+      strokeWeight(PARAMS.lineWeight);
+      for (let c of cells) {
+        noFill();
+        rect(c.x, c.y, c.w, c.h);
       }
     }
 
