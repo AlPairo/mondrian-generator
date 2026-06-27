@@ -16,21 +16,21 @@
       display: flex;
     }
     #sidebar {
-      width: 280px;
+      width: 300px;
       background: #12121a;
       border-right: 1px solid #222;
       display: flex;
       flex-direction: column;
       overflow-y: auto;
       padding: 20px;
-      gap: 16px;
+      gap: 14px;
       flex-shrink: 0;
     }
     #sidebar h1 {
       font-size: 18px;
       font-weight: 600;
       color: #fff;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
     #sidebar h2 {
       font-size: 12px;
@@ -82,10 +82,11 @@
       background: #1a1a24;
       border: 1px solid #333;
       color: #e0e0e0;
-      padding: 4px 6px;
+      padding: 5px 6px;
       border-radius: 4px;
       font-size: 13px;
       cursor: pointer;
+      width: 100%;
     }
     .value-label {
       font-size: 12px;
@@ -129,10 +130,17 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
-      margin-top: 8px;
+      margin-top: 4px;
     }
     .actions button {
       width: 100%;
+    }
+    .meta-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .meta-actions button {
+      flex: 1;
     }
     #canvas-container {
       flex: 1;
@@ -148,11 +156,136 @@
       width: auto;
       height: auto;
     }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .modal-overlay.active {
+      display: flex;
+    }
+    .modal {
+      background: #1a1a24;
+      border: 1px solid #333;
+      border-radius: 10px;
+      max-width: 640px;
+      width: 100%;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid #2a2a35;
+    }
+    .modal-header h3 {
+      font-size: 16px;
+      color: #fff;
+      margin: 0;
+    }
+    .modal-header button {
+      background: none;
+      border: none;
+      font-size: 20px;
+      color: #888;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-header button:hover {
+      color: #fff;
+      background: #252530;
+      border-radius: 6px;
+    }
+    .modal-body {
+      padding: 20px;
+      overflow-y: auto;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #ccc;
+    }
+    .modal-body h4 {
+      color: #fff;
+      margin: 14px 0 6px;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .modal-body h4:first-child {
+      margin-top: 0;
+    }
+    .modal-body p {
+      margin: 6px 0;
+    }
+    .modal-body ul {
+      margin: 6px 0 6px 18px;
+    }
+    .modal-body code {
+      background: #252530;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 12px;
+    }
+    .modal-body hr {
+      border: none;
+      border-top: 1px solid #2a2a35;
+      margin: 14px 0;
+    }
+    .modal-body strong {
+      color: #e0e0e0;
+    }
+    .artist-keyworks {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .artist-keyworks span {
+      background: #252530;
+      border: 1px solid #333;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #bbb;
+    }
   </style>
 </head>
 <body>
   <div id="sidebar">
     <h1>Mondrian Generator</h1>
+
+    <div class="control-group">
+      <h2>Style</h2>
+      <select id="styleSelect" onchange="updateParam('style', this.value); regenerate()">
+        <option value="mondrian">Piet Mondrian (De Stijl)</option>
+        <option value="vandoesburg">Theo van Doesburg (Elementarism)</option>
+        <option value="vanderleck">Bart van der Leck (De Stijl)</option>
+        <option value="malevich">Kasimir Malevich (Suprematism)</option>
+        <option value="lissitzky">El Lissitzky (Constructivism)</option>
+        <option value="albers">Josef Albers (Homage to the Square)</option>
+        <option value="kelly">Ellsworth Kelly (Hard-edge)</option>
+        <option value="lewitt">Sol LeWitt (Wall Drawings)</option>
+      </select>
+    </div>
+
+    <div class="meta-actions">
+      <button onclick="showArtistInfo()">Info</button>
+      <button onclick="showReferences()">View References</button>
+    </div>
 
     <div class="control-group">
       <h2>Seed</h2>
@@ -256,9 +389,280 @@
 
   <div id="canvas-container"></div>
 
+  <!-- Artist Info Modal -->
+  <div class="modal-overlay" id="artistModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="artistModalTitle">Artist Info</h3>
+        <button onclick="closeModal('artistModal')">&times;</button>
+      </div>
+      <div class="modal-body" id="artistModalBody"></div>
+    </div>
+  </div>
+
+  <!-- References Modal -->
+  <div class="modal-overlay" id="refsModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>References</h3>
+        <button onclick="closeModal('refsModal')">&times;</button>
+      </div>
+      <div class="modal-body" id="refsModalBody"></div>
+    </div>
+  </div>
+
+  <script type="text/plain" id="references-source">
+# References — Geometric Abstraction Artists
+
+This document catalogs the artists whose visual languages inspired the generative compositions in this project.
+
+---
+
+## 1. Piet Mondrian (1872–1944)
+
+**Nationality:** Dutch  
+**Movement:** Neoplasticism (De Stijl)  
+**Peak period:** 1920–1944
+
+Piet Cornelis Mondriaan (later Mondrian) began as a naturalistic landscape painter. In 1917 he co-founded *De Stijl* magazine with Theo van Doesburg. His mature style — black orthogonal lines forming irregular grids, filled with red, blue, yellow, white, and occasionally gray — became his life's work. He fled WWII Europe for New York, where his late works introduced fragmented color segments inspired by jazz.
+
+**Visual Style**
+- Lines: Only horizontal and vertical. Black, usually uniform within a single work.
+- Forms: Rectangles of unequal proportion. The grid is asymmetric but balanced.
+- Colors: Strict primaries plus non-colors (white, black, gray). No mixing, no gradients.
+- Composition: Edge-to-edge lines. Some rectangles are left white; a minority receive color.
+- Space: Entirely flat. No perspective, no depth cues.
+
+**Key Works**
+- Composition with Red, Blue, and Yellow (1930)
+- Composition A (1923)
+- Broadway Boogie Woogie (1943)
+- Victory Boogie Woogie (1944, unfinished)
+
+---
+
+## 2. Theo van Doesburg (1883–1931)
+
+**Nationality:** Dutch  
+**Movement:** De Stijl, Elementarism  
+**Peak period:** 1917–1931
+
+Theo van Doesburg founded *De Stijl* magazine and acted as its international ambassador. The decisive break with Mondrian came in 1924 when van Doesburg introduced the diagonal into his compositions. Mondrian viewed this as a betrayal of neoplasticist principles and left De Stijl. Van Doesburg rechristened his new approach "Elementarism," arguing that the diagonal introduced dynamism.
+
+**Visual Style**
+- Lines: Horizontal, vertical, and diagonal. The diagonal is the hallmark.
+- Forms: Parallelograms and trapezoids created by intersecting diagonals.
+- Colors: Same primaries + non-colors as Mondrian, but arranged to create directional tension.
+- Composition: More dynamic than Mondrian. Compositions feel like they are in motion.
+- Space: Flat, but the diagonal introduces a suggestion of depth.
+
+**Key Works**
+- Counter-Composition V (1924)
+- Counter-Composition XIII (1925–26)
+- Simultaneous Counter-Composition (1929–30)
+- Stained-glass composition XXIII (1924)
+
+---
+
+## 3. Bart van der Leck (1876–1958)
+
+**Nationality:** Dutch  
+**Movement:** De Stijl  
+**Peak period:** 1916–1920
+
+Bart van der Leck was the oldest member of the De Stijl circle and its precursor. His 1916 painting *The Tempest* shows a rider on a horse decomposed into colored rectangles and black outlines — directly influencing Mondrian's move toward pure abstraction. After 1920 he largely withdrew and developed a more personal style with isolated colored forms on white grounds.
+
+**Visual Style**
+- Lines: Thick black outlines around flat color planes.
+- Forms: Simplified, almost pictographic shapes derived from recognizable subjects.
+- Colors: Primaries, but with a tendency toward larger white spaces and isolated color patches.
+- Composition: Less grid-locked than Mondrian. Shapes float across generous white space.
+
+**Key Works**
+- The Tempest (1916)
+- Composition 1917 (1917)
+- Woman with Goats (c. 1920)
+
+---
+
+## 4. Kasimir Malevich (1878–1935)
+
+**Nationality:** Russian  
+**Movement:** Suprematism  
+**Peak period:** 1915–1935
+
+Kazimir Malevich passed through Impressionism, Symbolism, and Cubo-Futurism before arriving at Suprematism in 1915 with the exhibition *0,10*, where he hung *Black Square* in the corner of the room. Suprematism claimed to depict "the supremacy of pure artistic feeling" over representation of objects. He taught at Vitebsk (where he influenced El Lissitzky).
+
+**Visual Style**
+- Lines: Minimal. Forms are self-contained and float without enclosing grids.
+- Forms: Squares, circles, crosses, rectangles, and lines. Simple, iconic shapes.
+- Colors: White background is dominant. Black, red, and occasionally blue or yellow forms.
+- Composition: Forms float in an undefined white space, like objects in zero gravity.
+- Space: Infinite white void. The canvas is a window into boundless space.
+
+**Key Works**
+- Black Square (1915)
+- Suprematist Composition: Airplane Flying (1915)
+- Suprematist Composition (1916)
+- White on White (1918)
+
+---
+
+## 5. El Lissitzky (1890–1941)
+
+**Nationality:** Russian  
+**Movement:** Suprematism, Constructivism  
+**Peak period:** 1919–1929
+
+Lazar Markovich Lissitzky was deeply influenced by Malevich's Suprematism but sought to extend it into three dimensions and practical design. His *Proun* series are abstract compositions that occupy an ambiguous space between painting and architecture — axonometric projections of impossible structures. His famous *Beat the Whites with the Red Wedge* (1919) translates Suprematist geometry into political narrative.
+
+**Visual Style**
+- Lines: Thin, precise lines suggesting architectural plans and axonometric projection.
+- Forms: Overlapping rectangles, circles, and wedges. Forms appear to slide past each other.
+- Colors: Limited palette — red, black, white, gray. Color is used structurally.
+- Composition: Asymmetrical, dynamic, with forms seeming to enter and exit the frame.
+- Space: Shallow but present. Forms overlap and cast no shadows, yet suggest layers.
+
+**Key Works**
+- Proun 99 (1923–25)
+- Proun 30T (1920)
+- Beat the Whites with the Red Wedge (1919)
+- The Constructor (self-portrait photomontage, 1924)
+
+---
+
+## 6. Josef Albers (1888–1976)
+
+**Nationality:** German-American  
+**Movement:** Bauhaus, Hard-edge painting  
+**Peak period:** 1950–1976
+
+Josef Albers is best known for his *Homage to the Square* series — over 1,000 paintings, all variations on the same nested-square format. Albers was not interested in composition in the traditional sense; he was interested in color interaction. His book *Interaction of Color* (1963) is still a standard text in art education.
+
+**Visual Style**
+- Lines: No visible lines. Edges between color fields are sharp but not drawn.
+- Forms: Perfectly nested squares, always concentric, always with the same proportional spacing.
+- Colors: The entire subject. Albers used oil paint but treated color as data.
+- Composition: Rigidly fixed format. The only variable is color.
+
+**Key Works**
+- Homage to the Square: With Orchids (1962)
+- Homage to the Square: Apparition (1959)
+- Homage to the Square: Temperate (1957)
+- Variant/Adobe series (1947–55)
+
+---
+
+## 7. Ellsworth Kelly (1923–2015)
+
+**Nationality:** American  
+**Movement:** Hard-edge painting, Color Field  
+**Peak period:** 1950–2015
+
+Ellsworth Kelly lived in Paris from 1948 to 1954, where he encountered Mondrian, Arp, and Brancusi. His innovation was radical simplification: a single shape on a canvas, or a canvas shaped to match the form it contains. His *Colors for a Large Wall* (1951) consists of 64 monochromatic panels arranged in a grid — a direct descendant of Mondrian but with each cell isolated.
+
+**Visual Style**
+- Lines: The edge of the shape itself. No interior lines, no grids.
+- Forms: A single dominant shape — rectangle, circle, irregular curve, or multi-panel arrangement.
+- Colors: Flat, unmodulated color. One color per shape.
+- Composition: Extreme reduction. The entire canvas is activated by the tension between one form and its background.
+
+**Key Works**
+- Colors for a Large Wall (1951)
+- Red Blue Green (1963)
+- Spectrum Colors Arranged by Chance (1951–52)
+- Curve XXII (1982)
+
+---
+
+## 8. Sol LeWitt (1928–2007)
+
+**Nationality:** American  
+**Movement:** Conceptual art, Minimalism  
+**Peak period:** 1968–2007
+
+Sol LeWitt is best known for his *Wall Drawings* — instructions written by LeWitt and executed by teams of draftsmen on gallery walls. The instructions are the artwork; the physical manifestation is temporary and replaceable. LeWitt's vocabulary is entirely geometric: lines, grids, cubes, and color bands. His structures are modular and combinatorial.
+
+**Visual Style**
+- Lines: Straight, diagonal, curved, or broken. Often in multiple directions superimposed.
+- Forms: Grids, cubes, color bands. Forms are created by the intersection of lines.
+- Colors: Early work is monochrome. Later Wall Drawings use flat color washes.
+- Composition: Determined by a written instruction. The visual result is the logical outcome of a rule.
+
+**Key Works**
+- Wall Drawing #11 (1969)
+- Wall Drawing #122 (1972)
+- Serial Project, I (ABCD) (1966)
+
+---
+
+*Document compiled for the Mondrian Generator project.*
+  </script>
+
   <script>
+    // === ARTIST DATA ===
+    const ARTIST_DATA = {
+      mondrian: {
+        name: 'Piet Mondrian',
+        years: '1872–1944',
+        movement: 'Neoplasticism (De Stijl)',
+        description: 'Dutch painter who co-founded De Stijl in 1917. His mature style — black orthogonal lines forming irregular grids filled with red, blue, yellow, white, and gray — became synonymous with geometric abstraction.',
+        keyWorks: ['Composition with Red, Blue, and Yellow (1930)', 'Broadway Boogie Woogie (1943)']
+      },
+      vandoesburg: {
+        name: 'Theo van Doesburg',
+        years: '1883–1931',
+        movement: 'De Stijl, Elementarism',
+        description: 'Founder of De Stijl magazine and the movement\'s international ambassador. In 1924 he introduced the diagonal into his compositions, breaking with Mondrian and founding Elementarism to embrace dynamic tension.',
+        keyWorks: ['Counter-Composition V (1924)', 'Simultaneous Counter-Composition (1929–30)']
+      },
+      vanderleck: {
+        name: 'Bart van der Leck',
+        years: '1876–1958',
+        movement: 'De Stijl',
+        description: 'The oldest member of the De Stijl circle and its precursor. His 1916 work directly influenced Mondrian\'s move to pure abstraction. Known for thick black outlines and isolated color forms on generous white grounds.',
+        keyWorks: ['The Tempest (1916)', 'Composition 1917 (1917)']
+      },
+      malevich: {
+        name: 'Kasimir Malevich',
+        years: '1878–1935',
+        movement: 'Suprematism',
+        description: 'Russian artist who founded Suprematism in 1915 with his iconic Black Square. His geometric forms — squares, circles, and lines — float in infinite white voids, seeking "the supremacy of pure artistic feeling."',
+        keyWorks: ['Black Square (1915)', 'Suprematist Composition: Airplane Flying (1915)']
+      },
+      lissitzky: {
+        name: 'El Lissitzky',
+        years: '1890–1941',
+        movement: 'Suprematism, Constructivism',
+        description: 'Russian painter, designer, and architect who extended Malevich\'s Suprematism into three dimensions via his Proun series. He believed art should serve social revolution and translated geometry into political narrative.',
+        keyWorks: ['Proun 99 (1923–25)', 'Beat the Whites with the Red Wedge (1919)']
+      },
+      albers: {
+        name: 'Josef Albers',
+        years: '1888–1976',
+        movement: 'Bauhaus, Hard-edge painting',
+        description: 'German-American artist and educator best known for his Homage to the Square series — over 1,000 nested-square paintings exploring color interaction. His book Interaction of Color remains a standard art-education text.',
+        keyWorks: ['Homage to the Square: With Orchids (1962)', 'Homage to the Square: Apparition (1959)']
+      },
+      kelly: {
+        name: 'Ellsworth Kelly',
+        years: '1923–2015',
+        movement: 'Hard-edge painting, Color Field',
+        description: 'American painter whose radical simplification — a single shape on a canvas, or a canvas shaped to match its form — bridges European geometric abstraction and American minimalism.',
+        keyWorks: ['Colors for a Large Wall (1951)', 'Red Blue Green (1963)']
+      },
+      lewitt: {
+        name: 'Sol LeWitt',
+        years: '1928–2007',
+        movement: 'Conceptual art, Minimalism',
+        description: 'American artist whose Wall Drawings center on ideas rather than objects. Instructions written by LeWitt are executed by draftsmen, making the concept the artwork and the physical output temporary.',
+        keyWorks: ['Wall Drawing #11 (1969)', 'Wall Drawing #122 (1972)']
+      }
+    };
+
     // === DEFAULTS ===
     const DEFAULTS = {
+      style: 'mondrian',
       seed: 42,
       canvasSize: 800,
       lineWeight: 8,
@@ -310,12 +714,13 @@
     function regenerate() {
       randomSeed(PARAMS.seed);
       noiseSeed(PARAMS.seed);
-      generateMondrian();
+      generate();
       redraw();
     }
 
     function resetDefaults() {
       PARAMS = { ...DEFAULTS };
+      document.getElementById('styleSelect').value = PARAMS.style;
       document.getElementById('seedInput').value = PARAMS.seed;
       document.getElementById('canvasSize').value = PARAMS.canvasSize;
       document.getElementById('lineWeight').value = PARAMS.lineWeight;
@@ -337,20 +742,110 @@
     }
 
     function downloadPNG() {
-      saveCanvas('mondrian-seed-' + PARAMS.seed, 'png');
+      saveCanvas(PARAMS.style + '-seed-' + PARAMS.seed, 'png');
     }
 
-    function pickColor() {
-      if (random() > PARAMS.colorProbability) {
-        return null;
+    // === MODALS ===
+    function showArtistInfo() {
+      const data = ARTIST_DATA[PARAMS.style] || ARTIST_DATA.mondrian;
+      document.getElementById('artistModalTitle').textContent = data.name;
+      document.getElementById('artistModalBody').innerHTML = `
+        <h4>Years</h4>
+        <p>${data.years}</p>
+        <h4>Movement</h4>
+        <p>${data.movement}</p>
+        <h4>Description</h4>
+        <p>${data.description}</p>
+        <h4>Key Works</h4>
+        <div class="artist-keyworks">
+          ${data.keyWorks.map(w => `<span>${w}</span>`).join('')}
+        </div>
+      `;
+      document.getElementById('artistModal').classList.add('active');
+    }
+
+    function showReferences() {
+      const raw = document.getElementById('references-source').textContent;
+      document.getElementById('refsModalBody').innerHTML = renderMarkdownBasic(raw);
+      document.getElementById('refsModal').classList.add('active');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', e => {
+        if (e.target === overlay) overlay.classList.remove('active');
+      });
+    });
+
+    function renderMarkdownBasic(md) {
+      return md
+        .replace(/^# (.*$)/gim, '<h4>$1</h4>')
+        .replace(/^## (.*$)/gim, '<h4>$1</h4>')
+        .replace(/^### (.*$)/gim, '<h4>$1</h4>')
+        .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/gim, '<em>$1</em>')
+        .replace(/^- (.*$)/gim, '<li>$1</li>')
+        .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+        .replace(/---/g, '<hr>')
+        .replace(/\n/g, '<br>');
+    }
+
+    // === COLOR HELPERS ===
+    function ensureMinimumColor() {
+      let colored = cells.filter(c => c.color !== null);
+      let minColored = Math.max(3, Math.floor(cells.length * 0.12));
+      if (colored.length < minColored) {
+        let empty = cells.filter(c => c.color === null);
+        empty.sort(() => random() - 0.5);
+        let needed = minColored - colored.length;
+        for (let i = 0; i < Math.min(needed, empty.length); i++) {
+          empty[i].color = pickColorForced();
+        }
       }
+      if (colored.length >= 2) {
+        let uniqueColors = new Set(colored.map(c => c.color));
+        if (uniqueColors.size < 2) {
+          let empty = cells.filter(c => c.color === null);
+          if (empty.length > 0) {
+            let palette = [PARAMS.red, PARAMS.blue, PARAMS.yellow].filter(c => c !== colored[0].color);
+            empty[0].color = random(palette);
+          }
+        }
+      }
+    }
+
+    function ensureMinimumColorCount(arr, min) {
+      let colored = arr.filter(c => c.color !== null);
+      if (colored.length < min) {
+        let empty = arr.filter(c => c.color === null);
+        empty.sort(() => random() - 0.5);
+        let needed = min - colored.length;
+        for (let i = 0; i < Math.min(needed, empty.length); i++) {
+          empty[i].color = pickColorForced();
+        }
+      }
+    }
+
+    function pickColorForced() {
       let palette = [PARAMS.red, PARAMS.blue, PARAMS.yellow];
-      if (PARAMS.useGray) {
-        palette.push(PARAMS.grayColor);
-      }
+      if (PARAMS.useGray) palette.push(PARAMS.grayColor);
       return random(palette);
     }
 
+    function pickColor() {
+      if (random() > PARAMS.colorProbability) return null;
+      return pickColorForced();
+    }
+
+    function pickColorProb(p) {
+      if (random() > p) return null;
+      return pickColorForced();
+    }
+
+    // === SUBDIVISION ===
     function subdivide(x, y, w, h) {
       if (w < PARAMS.minCellSize * 2 && h < PARAMS.minCellSize * 2) {
         cells.push({ x, y, w, h, color: pickColor() });
@@ -388,9 +883,25 @@
       }
     }
 
+    // === STYLE ROUTER ===
+    function generate() {
+      switch (PARAMS.style) {
+        case 'vandoesburg': generateVanDoesburg(); break;
+        case 'vanderleck': generateVanDerLeck(); break;
+        case 'malevich': generateMalevich(); break;
+        case 'lissitzky': generateLissitzky(); break;
+        case 'albers': generateAlbers(); break;
+        case 'kelly': generateKelly(); break;
+        case 'lewitt': generateLeWitt(); break;
+        default: generateMondrian(); break;
+      }
+    }
+
+    // === MONDRIAN ===
     function generateMondrian() {
       cells = [];
       subdivide(0, 0, PARAMS.canvasSize, PARAMS.canvasSize);
+      ensureMinimumColor();
 
       background(PARAMS.bgColor);
 
@@ -412,6 +923,385 @@
       }
     }
 
+    // === VAN DOESBURG ===
+    function generateVanDoesburg() {
+      cells = [];
+      subdivide(0, 0, PARAMS.canvasSize, PARAMS.canvasSize);
+      ensureMinimumColor();
+
+      background(PARAMS.bgColor);
+
+      // Fill cells
+      for (let c of cells) {
+        if (c.color) {
+          fill(c.color);
+          noStroke();
+          let inset = PARAMS.lineWeight / 2;
+          rect(c.x + inset, c.y + inset, c.w - inset * 2, c.h - inset * 2);
+        }
+      }
+
+      // Draw grid lines
+      stroke(PARAMS.lineColor);
+      strokeWeight(PARAMS.lineWeight);
+      for (let c of cells) {
+        noFill();
+        rect(c.x, c.y, c.w, c.h);
+      }
+
+      // Add diagonal slices through some cells
+      let sliceCount = Math.floor(random(2, 5));
+      let candidates = cells.filter(c => c.w > PARAMS.minCellSize && c.h > PARAMS.minCellSize);
+      candidates.sort(() => random() - 0.5);
+      for (let i = 0; i < Math.min(sliceCount, candidates.length); i++) {
+        let c = candidates[i];
+        let d1 = random() > 0.5;
+        stroke(PARAMS.lineColor);
+        strokeWeight(PARAMS.lineWeight * 0.8);
+        if (d1) {
+          line(c.x, c.y, c.x + c.w, c.y + c.h);
+        } else {
+          line(c.x + c.w, c.y, c.x, c.y + c.h);
+        }
+        // Optionally color one triangular half
+        if (random() > 0.4) {
+          let col = pickColorForced();
+          fill(col);
+          noStroke();
+          beginShape();
+          if (d1) {
+            vertex(c.x, c.y);
+            vertex(c.x + c.w, c.y + c.h);
+            vertex(c.x, c.y + c.h);
+          } else {
+            vertex(c.x + c.w, c.y);
+            vertex(c.x, c.y + c.h);
+            vertex(c.x + c.w, c.y + c.h);
+          }
+          endShape(CLOSE);
+        }
+      }
+    }
+
+    // === VAN DER LECK ===
+    function generateVanDerLeck() {
+      cells = [];
+      // Fewer splits: higher min cell size and lower split chance for this run
+      let savedMin = PARAMS.minCellSize;
+      let savedSplit = PARAMS.splitChance;
+      PARAMS.minCellSize = Math.max(savedMin, Math.floor(PARAMS.canvasSize * 0.22));
+      PARAMS.splitChance = 0.35;
+      subdivide(0, 0, PARAMS.canvasSize, PARAMS.canvasSize);
+      PARAMS.minCellSize = savedMin;
+      PARAMS.splitChance = savedSplit;
+
+      ensureMinimumColorCount(cells, 3);
+
+      background(PARAMS.bgColor);
+
+      let thick = Math.max(PARAMS.lineWeight, Math.floor(PARAMS.canvasSize * 0.018));
+
+      for (let c of cells) {
+        if (c.color) {
+          fill(c.color);
+          noStroke();
+          rect(c.x + thick, c.y + thick, c.w - thick * 2, c.h - thick * 2);
+        }
+      }
+
+      stroke(PARAMS.lineColor);
+      strokeWeight(thick);
+      for (let c of cells) {
+        noFill();
+        rect(c.x, c.y, c.w, c.h);
+      }
+    }
+
+    // === MALEVICH ===
+    function generateMalevich() {
+      background(PARAMS.bgColor);
+      let s = PARAMS.canvasSize;
+      let forms = [];
+      let count = Math.floor(random(3, 8));
+      let palette = [PARAMS.lineColor, PARAMS.lineColor, PARAMS.red, PARAMS.blue, PARAMS.yellow];
+
+      for (let i = 0; i < count; i++) {
+        let shapeType = random() > 0.75 ? 'circle' : (random() > 0.85 ? 'line' : 'rect');
+        let size = random(s * 0.08, s * 0.35);
+        let x = random(s * 0.1, s * 0.9);
+        let y = random(s * 0.1, s * 0.9);
+        let color = random(palette);
+        let rot = random(TWO_PI);
+        forms.push({ shapeType, x, y, size, color, rot });
+      }
+
+      // Ensure at least one primary color
+      let hasPrimary = forms.some(f => f.color === PARAMS.red || f.color === PARAMS.blue || f.color === PARAMS.yellow);
+      if (!hasPrimary && forms.length > 0) {
+        forms[0].color = random([PARAMS.red, PARAMS.blue, PARAMS.yellow]);
+      }
+
+      // Sort so larger forms draw first (background)
+      forms.sort((a, b) => b.size - a.size);
+
+      for (let f of forms) {
+        noStroke();
+        fill(f.color);
+        push();
+        translate(f.x, f.y);
+        rotate(f.rot);
+        if (f.shapeType === 'rect') {
+          rectMode(CENTER);
+          rect(0, 0, f.size, f.size * random(0.5, 1.5));
+        } else if (f.shapeType === 'circle') {
+          circle(0, 0, f.size);
+        } else {
+          stroke(f.color);
+          strokeWeight(max(2, s * 0.008));
+          line(-f.size / 2, 0, f.size / 2, 0);
+        }
+        pop();
+      }
+
+      // Thin motion lines / trails on some forms
+      for (let f of forms) {
+        if (random() > 0.6) {
+          stroke(PARAMS.lineColor);
+          strokeWeight(max(1, s * 0.004));
+          let tx = f.x + random(-s * 0.15, s * 0.15);
+          let ty = f.y + random(-s * 0.15, s * 0.15);
+          line(f.x, f.y, tx, ty);
+        }
+      }
+    }
+
+    // === EL LISSITZKY ===
+    function generateLissitzky() {
+      background(PARAMS.bgColor);
+      let s = PARAMS.canvasSize;
+      let forms = [];
+      let count = Math.floor(random(5, 10));
+      let palette = [PARAMS.red, PARAMS.lineColor, PARAMS.grayColor, PARAMS.bgColor];
+
+      for (let i = 0; i < count; i++) {
+        let w = random(s * 0.15, s * 0.5);
+        let h = random(s * 0.1, s * 0.35);
+        let x = random(-s * 0.1, s * 0.7);
+        let y = random(-s * 0.1, s * 0.7);
+        let shearAmt = random(-0.35, 0.35);
+        let color = random(palette);
+        forms.push({ x, y, w, h, shearAmt, color });
+      }
+
+      // Ensure at least one red + one black
+      if (!forms.some(f => f.color === PARAMS.red)) forms[0].color = PARAMS.red;
+      if (!forms.some(f => f.color === PARAMS.lineColor)) forms[1].color = PARAMS.lineColor;
+
+      // Draw construction lines
+      stroke(PARAMS.grayColor);
+      strokeWeight(max(1, s * 0.003));
+      for (let i = 0; i < 6; i++) {
+        let x = random(s * 0.1, s * 0.9);
+        line(x, 0, x + random(-s * 0.1, s * 0.1), s);
+      }
+      for (let i = 0; i < 6; i++) {
+        let y = random(s * 0.1, s * 0.9);
+        line(0, y + random(-s * 0.05, s * 0.05), s, y);
+      }
+
+      // Draw overlapping sheared rectangles
+      for (let f of forms) {
+        noStroke();
+        fill(f.color);
+        push();
+        translate(f.x + f.w / 2, f.y + f.h / 2);
+        shearX(f.shearAmt);
+        rectMode(CENTER);
+        rect(0, 0, f.w, f.h);
+        pop();
+      }
+
+      // One or two circles breaking the rhythm
+      if (random() > 0.3) {
+        noStroke();
+        fill(random([PARAMS.red, PARAMS.yellow, PARAMS.lineColor]));
+        let cx = random(s * 0.2, s * 0.8);
+        let cy = random(s * 0.2, s * 0.8);
+        let cr = random(s * 0.05, s * 0.18);
+        circle(cx, cy, cr);
+      }
+    }
+
+    // === ALBERS ===
+    function generateAlbers() {
+      background(PARAMS.bgColor);
+      let s = PARAMS.canvasSize;
+      let margin = s * 0.08;
+      let levels = Math.floor(random(3, 5));
+
+      // Build a harmonious or contrasting palette for this composition
+      let baseHue = random(360);
+      let palettes = [];
+      for (let i = 0; i < levels; i++) {
+        let h = (baseHue + i * 30 + random(20)) % 360;
+        let sat = random(30, 85);
+        let bri = random(35, 90);
+        colorMode(HSB);
+        palettes.push(color(h, sat, bri));
+      }
+      colorMode(RGB);
+
+      // One random primary override for pop
+      if (random() > 0.4) {
+        palettes[Math.floor(random(levels))] = color(PARAMS.red);
+      }
+      if (random() > 0.5) {
+        palettes[Math.floor(random(levels))] = color(PARAMS.blue);
+      }
+      if (random() > 0.5) {
+        palettes[Math.floor(random(levels))] = color(PARAMS.yellow);
+      }
+
+      let shrink = 0.72 + random(0.06);
+      let cx = s / 2;
+      let cy = s / 2;
+      let size = s - margin * 2;
+
+      noStroke();
+      for (let i = 0; i < levels; i++) {
+        fill(palettes[i]);
+        rectMode(CENTER);
+        rect(cx, cy, size, size);
+        size *= shrink;
+      }
+      rectMode(CORNER);
+    }
+
+    // === KELLY ===
+    function generateKelly() {
+      background(PARAMS.bgColor);
+      let s = PARAMS.canvasSize;
+
+      if (random() > 0.5) {
+        // Single dominant shape
+        let shapeType = random() > 0.5 ? 'rect' : 'circle';
+        let col = random([PARAMS.red, PARAMS.blue, PARAMS.yellow, PARAMS.lineColor]);
+        noStroke();
+        fill(col);
+        if (shapeType === 'rect') {
+          let w = random(s * 0.3, s * 0.7);
+          let h = random(s * 0.3, s * 0.7);
+          let x = random(s * 0.05, s * 0.95 - w);
+          let y = random(s * 0.05, s * 0.95 - h);
+          rect(x, y, w, h);
+        } else {
+          let r = random(s * 0.15, s * 0.35);
+          let x = random(s * 0.2, s * 0.8);
+          let y = random(s * 0.2, s * 0.8);
+          circle(x, y, r);
+        }
+      } else {
+        // Grid of colored panels
+        let cols = Math.floor(random(3, 6));
+        let rows = Math.floor(random(3, 6));
+        let gap = Math.max(2, Math.floor(s * 0.01));
+        let cellW = (s - gap * (cols + 1)) / cols;
+        let cellH = (s - gap * (rows + 1)) / rows;
+        let palette = [PARAMS.red, PARAMS.blue, PARAMS.yellow, PARAMS.lineColor, PARAMS.bgColor, PARAMS.grayColor];
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            let x = gap + c * (cellW + gap);
+            let y = gap + r * (cellH + gap);
+            noStroke();
+            fill(random(palette));
+            rect(x, y, cellW, cellH);
+          }
+        }
+      }
+    }
+
+    // === LEWITT ===
+    function generateLeWitt() {
+      background(PARAMS.bgColor);
+      let s = PARAMS.canvasSize;
+      let cols = Math.floor(random(4, 8));
+      let rows = Math.floor(random(4, 8));
+      let gap = PARAMS.lineWeight;
+      let cellW = (s - gap * (cols + 1)) / cols;
+      let cellH = (s - gap * (rows + 1)) / rows;
+
+      // Fill some cells with flat color
+      let coloredCells = [];
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          if (random() < PARAMS.colorProbability * 0.6) {
+            let x = gap + c * (cellW + gap);
+            let y = gap + r * (cellH + gap);
+            coloredCells.push({ x, y, w: cellW, h: cellH, color: pickColorForced() });
+          }
+        }
+      }
+      // Ensure some color
+      if (coloredCells.length < 2) {
+        let r = Math.floor(random(rows));
+        let c = Math.floor(random(cols));
+        let x = gap + c * (cellW + gap);
+        let y = gap + r * (cellH + gap);
+        coloredCells.push({ x, y, w: cellW, h: cellH, color: pickColorForced() });
+      }
+
+      for (let cc of coloredCells) {
+        noStroke();
+        fill(cc.color);
+        rect(cc.x, cc.y, cc.w, cc.h);
+      }
+
+      // Draw line patterns in each cell
+      let lineTypes = ['vertical', 'horizontal', 'diag1', 'diag2', 'cross'];
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          let x = gap + c * (cellW + gap);
+          let y = gap + r * (cellH + gap);
+          let type = random(lineTypes);
+          stroke(PARAMS.lineColor);
+          strokeWeight(max(1, PARAMS.lineWeight * 0.4));
+
+          if (type === 'vertical') {
+            let n = Math.floor(random(3, 7));
+            for (let i = 1; i < n; i++) {
+              let lx = x + (cellW / n) * i;
+              line(lx, y, lx, y + cellH);
+            }
+          } else if (type === 'horizontal') {
+            let n = Math.floor(random(3, 7));
+            for (let i = 1; i < n; i++) {
+              let ly = y + (cellH / n) * i;
+              line(x, ly, x + cellW, ly);
+            }
+          } else if (type === 'diag1') {
+            line(x, y, x + cellW, y + cellH);
+          } else if (type === 'diag2') {
+            line(x + cellW, y, x, y + cellH);
+          } else if (type === 'cross') {
+            line(x, y, x + cellW, y + cellH);
+            line(x + cellW, y, x, y + cellH);
+          }
+        }
+      }
+
+      // Outer grid lines
+      stroke(PARAMS.lineColor);
+      strokeWeight(PARAMS.lineWeight);
+      for (let c = 0; c <= cols; c++) {
+        let x = c * (cellW + gap) + gap / 2;
+        line(x, 0, x, s);
+      }
+      for (let r = 0; r <= rows; r++) {
+        let y = r * (cellH + gap) + gap / 2;
+        line(0, y, s, y);
+      }
+    }
+
     function setup() {
       let cnv = createCanvas(PARAMS.canvasSize, PARAMS.canvasSize);
       cnv.parent('canvas-container');
@@ -419,17 +1309,16 @@
 
       randomSeed(PARAMS.seed);
       noiseSeed(PARAMS.seed);
-      generateMondrian();
+      generate();
       noLoop();
     }
 
     function draw() {
-      // All drawing happens in generateMondrian()
+      // All drawing happens in generate()
     }
 
     function windowResized() {
       // Canvas is kept at PARAMS.canvasSize; CSS handles responsive display
-      // No need to resize the canvas itself
     }
   </script>
 </body>
