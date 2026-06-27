@@ -143,6 +143,10 @@
     }
     canvas {
       box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
     }
   </style>
 </head>
@@ -299,9 +303,7 @@
     }
 
     function resizeAndRegenerate() {
-      let container = document.getElementById('canvas-container');
-      let size = Math.min(container.clientWidth - 40, container.clientHeight - 40, PARAMS.canvasSize);
-      resizeCanvas(size, size);
+      resizeCanvas(PARAMS.canvasSize, PARAMS.canvasSize);
       regenerate();
     }
 
@@ -411,9 +413,7 @@
     }
 
     function setup() {
-      let container = document.getElementById('canvas-container');
-      let size = Math.min(container.clientWidth - 40, container.clientHeight - 40, PARAMS.canvasSize);
-      let cnv = createCanvas(size, size);
+      let cnv = createCanvas(PARAMS.canvasSize, PARAMS.canvasSize);
       cnv.parent('canvas-container');
       pixelDensity(1);
 
@@ -428,10 +428,8 @@
     }
 
     function windowResized() {
-      let container = document.getElementById('canvas-container');
-      let size = Math.min(container.clientWidth - 40, container.clientHeight - 40, PARAMS.canvasSize);
-      resizeCanvas(size, size);
-      regenerate();
+      // Canvas is kept at PARAMS.canvasSize; CSS handles responsive display
+      // No need to resize the canvas itself
     }
   </script>
 </body>
