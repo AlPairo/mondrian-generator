@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mondrian Generator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.3/p5.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: #0a0a0f;
+      color: #e0e0e0;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+    }
+    #sidebar {
+      width: 280px;
+      background: #12121a;
+      border-right: 1px solid #222;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 20px;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+    #sidebar h1 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    #sidebar h2 {
+      font-size: 12px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #888;
+      margin-bottom: 4px;
+    }
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .control-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    label {
+      font-size: 13px;
+      color: #bbb;
+      min-width: 90px;
+    }
+    input[type="range"] {
+      flex: 1;
+      min-width: 80px;
+      accent-color: #3b82f6;
+    }
+    input[type="color"] {
+      width: 32px;
+      height: 24px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      padding: 0;
+    }
+    input[type="number"] {
+      width: 70px;
+      background: #1a1a24;
+      border: 1px solid #333;
+      color: #e0e0e0;
+      padding: 4px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+    select {
+      background: #1a1a24;
+      border: 1px solid #333;
+      color: #e0e0e0;
+      padding: 4px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .value-label {
+      font-size: 12px;
+      color: #888;
+      min-width: 36px;
+      text-align: right;
+    }
+    button {
+      background: #1a1a24;
+      border: 1px solid #333;
+      color: #e0e0e0;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    button:hover {
+      background: #252530;
+      border-color: #444;
+    }
+    button.primary {
+      background: #3b82f6;
+      border-color: #3b82f6;
+      color: #fff;
+    }
+    button.primary:hover {
+      background: #2563eb;
+      border-color: #2563eb;
+    }
+    .seed-nav {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .seed-nav button {
+      padding: 4px 10px;
+    }
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .actions button {
+      width: 100%;
+    }
+    #canvas-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    canvas {
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+  </style>
+</head>
+<body>
+  <div id="sidebar">
+    <h1>Mondrian Generator</h1>
+
+    <div class="control-group">
+      <h2>Seed</h2>
+      <div class="seed-nav">
+        <button onclick="changeSeed(-1)">Prev</button>
+        <button onclick="changeSeed(1)">Next</button>
+        <button onclick="randomSeedValue()">Random</button>
+      </div>
+      <div class="control-row">
+        <label for="seedInput">Jump</label>
+        <input type="number" id="seedInput" value="42" onchange="setSeed(+this.value)">
+      </div>
+    </div>
+
+    <div id="params-section">
+      <div class="control-group">
+        <h2>Resolution</h2>
+        <select id="canvasSize" onchange="updateParam('canvasSize', +this.value); resizeAndRegenerate()">
+          <option value="600">600 px</option>
+          <option value="800" selected>800 px</option>
+          <option value="1080">1080 px</option>
+          <option value="1440">1440 px</option>
+          <option value="1920">1920 px</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <h2>Line Weight</h2>
+        <div class="control-row">
+          <input type="range" id="lineWeight" min="2" max="20" step="1" value="8" oninput="updateParam('lineWeight', +this.value); showVal(this, 'lineWeightVal'); regenerate()">
+          <span class="value-label" id="lineWeightVal">8</span>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h2>Min Cell Size</h2>
+        <div class="control-row">
+          <input type="range" id="minCellSize" min="30" max="200" step="10" value="80" oninput="updateParam('minCellSize', +this.value); showVal(this, 'minCellSizeVal'); regenerate()">
+          <span class="value-label" id="minCellSizeVal">80</span>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h2>Split Chance</h2>
+        <div class="control-row">
+          <input type="range" id="splitChance" min="0.1" max="0.9" step="0.05" value="0.65" oninput="updateParam('splitChance', +this.value); showVal(this, 'splitChanceVal'); regenerate()">
+          <span class="value-label" id="splitChanceVal">0.65</span>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h2>Color Probability</h2>
+        <div class="control-row">
+          <input type="range" id="colorProbability" min="0" max="1" step="0.05" value="0.35" oninput="updateParam('colorProbability', +this.value); showVal(this, 'colorProbabilityVal'); regenerate()">
+          <span class="value-label" id="colorProbabilityVal">0.35</span>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h2>Colors</h2>
+        <div class="control-row">
+          <label for="red">Red</label>
+          <input type="color" id="red" value="#E60012" onchange="updateParam('red', this.value); regenerate()">
+        </div>
+        <div class="control-row">
+          <label for="blue">Blue</label>
+          <input type="color" id="blue" value="#0055BF" onchange="updateParam('blue', this.value); regenerate()">
+        </div>
+        <div class="control-row">
+          <label for="yellow">Yellow</label>
+          <input type="color" id="yellow" value="#F6B800" onchange="updateParam('yellow', this.value); regenerate()">
+        </div>
+        <div class="control-row">
+          <label for="lineColor">Line</label>
+          <input type="color" id="lineColor" value="#111111" onchange="updateParam('lineColor', this.value); regenerate()">
+        </div>
+        <div class="control-row">
+          <label for="bgColor">Background</label>
+          <input type="color" id="bgColor" value="#F4F4F4" onchange="updateParam('bgColor', this.value); regenerate()">
+        </div>
+        <div class="control-row">
+          <label for="grayColor">Gray</label>
+          <input type="color" id="grayColor" value="#D0D0D0" onchange="updateParam('grayColor', this.value); regenerate()">
+        </div>
+      </div>
+
+      <div class="control-group">
+        <div class="control-row">
+          <label for="useGray">Use Gray Cells</label>
+          <input type="checkbox" id="useGray" onchange="updateParam('useGray', this.checked); regenerate()">
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="primary" onclick="regenerate()">Regenerate</button>
+      <button onclick="resetDefaults()">Reset Defaults</button>
+      <button onclick="downloadPNG()">Download PNG</button>
+    </div>
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <script>
+    // === DEFAULTS ===
+    const DEFAULTS = {
+      seed: 42,
+      canvasSize: 800,
+      lineWeight: 8,
+      minCellSize: 80,
+      splitChance: 0.65,
+      colorProbability: 0.35,
+      red: '#E60012',
+      blue: '#0055BF',
+      yellow: '#F6B800',
+      lineColor: '#111111',
+      bgColor: '#F4F4F4',
+      grayColor: '#D0D0D0',
+      useGray: false,
+    };
+    let PARAMS = { ...DEFAULTS };
+    let cells = [];
+
+    function updateParam(key, value) {
+      PARAMS[key] = value;
+    }
+
+    function showVal(el, labelId) {
+      document.getElementById(labelId).textContent = el.value;
+    }
+
+    function changeSeed(delta) {
+      PARAMS.seed += delta;
+      document.getElementById('seedInput').value = PARAMS.seed;
+      regenerate();
+    }
+
+    function randomSeedValue() {
+      PARAMS.seed = Math.floor(Math.random() * 1000000);
+      document.getElementById('seedInput').value = PARAMS.seed;
+      regenerate();
+    }
+
+    function setSeed(val) {
+      PARAMS.seed = val;
+      document.getElementById('seedInput').value = val;
+      regenerate();
+    }
+
+    function resizeAndRegenerate() {
+      let container = document.getElementById('canvas-container');
+      let size = Math.min(container.clientWidth - 40, container.clientHeight - 40, PARAMS.canvasSize);
+      resizeCanvas(size, size);
+      regenerate();
+    }
+
+    function regenerate() {
+      randomSeed(PARAMS.seed);
+      noiseSeed(PARAMS.seed);
+      generateMondrian();
+      redraw();
+    }
+
+    function resetDefaults() {
+      PARAMS = { ...DEFAULTS };
+      document.getElementById('seedInput').value = PARAMS.seed;
+      document.getElementById('canvasSize').value = PARAMS.canvasSize;
+      document.getElementById('lineWeight').value = PARAMS.lineWeight;
+      document.getElementById('lineWeightVal').textContent = PARAMS.lineWeight;
+      document.getElementById('minCellSize').value = PARAMS.minCellSize;
+      document.getElementById('minCellSizeVal').textContent = PARAMS.minCellSize;
+      document.getElementById('splitChance').value = PARAMS.splitChance;
+      document.getElementById('splitChanceVal').textContent = PARAMS.splitChance;
+      document.getElementById('colorProbability').value = PARAMS.colorProbability;
+      document.getElementById('colorProbabilityVal').textContent = PARAMS.colorProbability;
+      document.getElementById('red').value = PARAMS.red;
+      document.getElementById('blue').value = PARAMS.blue;
+      document.getElementById('yellow').value = PARAMS.yellow;
+      document.getElementById('lineColor').value = PARAMS.lineColor;
+      document.getElementById('bgColor').value = PARAMS.bgColor;
+      document.getElementById('grayColor').value = PARAMS.grayColor;
+      document.getElementById('useGray').checked = PARAMS.useGray;
+      resizeAndRegenerate();
+    }
+
+    function downloadPNG() {
+      saveCanvas('mondrian-seed-' + PARAMS.seed, 'png');
+    }
+
+    function pickColor() {
+      if (random() > PARAMS.colorProbability) {
+        return null;
+      }
+      let palette = [PARAMS.red, PARAMS.blue, PARAMS.yellow];
+      if (PARAMS.useGray) {
+        palette.push(PARAMS.grayColor);
+      }
+      return random(palette);
+    }
+
+    function subdivide(x, y, w, h) {
+      if (w < PARAMS.minCellSize * 2 && h < PARAMS.minCellSize * 2) {
+        cells.push({ x, y, w, h, color: pickColor() });
+        return;
+      }
+      if (w < PARAMS.minCellSize || h < PARAMS.minCellSize || random() > PARAMS.splitChance) {
+        cells.push({ x, y, w, h, color: pickColor() });
+        return;
+      }
+
+      let ratio = w / h;
+      let splitVert;
+      if (ratio > 1.8) splitVert = true;
+      else if (ratio < 0.55) splitVert = false;
+      else splitVert = random() > 0.5;
+
+      if (splitVert && w > PARAMS.minCellSize) {
+        let splitAt = random(PARAMS.minCellSize, w - PARAMS.minCellSize);
+        let thirds = [w * 0.33, w * 0.5, w * 0.67];
+        let closest = thirds.reduce((a, b) => Math.abs(b - splitAt) < Math.abs(a - splitAt) ? b : a);
+        if (abs(splitAt - closest) < w * 0.1) splitAt = closest;
+
+        subdivide(x, y, splitAt, h);
+        subdivide(x + splitAt, y, w - splitAt, h);
+      } else if (!splitVert && h > PARAMS.minCellSize) {
+        let splitAt = random(PARAMS.minCellSize, h - PARAMS.minCellSize);
+        let thirds = [h * 0.33, h * 0.5, h * 0.67];
+        let closest = thirds.reduce((a, b) => Math.abs(b - splitAt) < Math.abs(a - splitAt) ? b : a);
+        if (abs(splitAt - closest) < h * 0.1) splitAt = closest;
+
+        subdivide(x, y, w, splitAt);
+        subdivide(x, y + splitAt, w, h - splitAt);
+      } else {
+        cells.push({ x, y, w, h, color: pickColor() });
+      }
+    }
+
+    function generateMondrian() {
+      cells = [];
+      subdivide(0, 0, PARAMS.canvasSize, PARAMS.canvasSize);
+
+      background(PARAMS.bgColor);
+
+      for (let c of cells) {
+        if (c.color) {
+          fill(c.color);
+          noStroke();
+          let inset = PARAMS.lineWeight / 2;
+          rect(c.x + inset, c.y + inset, c.w - inset * 2, c.h - inset * 2);
+        }
+      }
+
+      stroke(PARAMS.lineColor);
+      strokeWeight(PARAMS.lineWeight);
+
+      for (let c of cells) {
+        noFill();
+        rect(c.x, c.y, c.w, c.h);
+      }
+    }
+
+    function setup() {
+      let container = document.getElementById('canvas-container');
+      let size = Math.min(container.clientWidth - 40, container.clientHeight - 40, PARAMS.canvasSize);
+      let cnv = createCanvas(size, size);
+      cnv.parent('canvas-container');
+      pixelDensity(1);
+
+      randomSeed(PARAMS.seed);
+      noiseSeed(PARAMS.seed);
+      generateMondrian();
+      noLoop();
+    }
+
+    function draw() {
+      // All drawing happens in generateMondrian()
+    }
+
+    function windowResized() {
+      let container = document.getElementById('canvas-container');
+      let size = Math.min(container.clientWidth - 40, container.clientHeight - 40, PARAMS.canvasSize);
+      resizeCanvas(size, size);
+      regenerate();
+    }
+  </script>
+</body>
+</html>
