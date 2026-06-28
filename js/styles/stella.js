@@ -4,10 +4,12 @@
 
 function generateStella() {
   let s = PARAMS.canvasSize;
+  beginBrushStyle(s);
+
   let mode = random() > 0.5 ? 'stripes' : 'concentric';
   let palette = getPalette();
 
-  background(PARAMS.bgColor);
+  bBackground(PARAMS.bgColor);
 
   if (mode === 'stripes') {
     // Irregular polygon with parallel interior stripes
@@ -33,26 +35,21 @@ function generateStella() {
     if (random() < 0.7) stripeColors.push(PARAMS.blue);
     if (random() < 0.5) stripeColors.push(PARAMS.yellow);
 
-    noStroke();
     for (let i = 0; i < numStripes; i++) {
       let t1 = i / numStripes;
       let t2 = (i + 1) / numStripes;
-      fill(stripeColors[i % stripeColors.length]);
-      beginShape();
-      vertex(lerp(v[0].x, v[3].x, t1), lerp(v[0].y, v[3].y, t1));
-      vertex(lerp(v[0].x, v[3].x, t2), lerp(v[0].y, v[3].y, t2));
-      vertex(lerp(v[1].x, v[2].x, t2), lerp(v[1].y, v[2].y, t2));
-      vertex(lerp(v[1].x, v[2].x, t1), lerp(v[1].y, v[2].y, t1));
-      endShape(CLOSE);
+      let verts = [
+        [lerp(v[0].x, v[3].x, t1), lerp(v[0].y, v[3].y, t1)],
+        [lerp(v[0].x, v[3].x, t2), lerp(v[0].y, v[3].y, t2)],
+        [lerp(v[1].x, v[2].x, t2), lerp(v[1].y, v[2].y, t2)],
+        [lerp(v[1].x, v[2].x, t1), lerp(v[1].y, v[2].y, t1)]
+      ];
+      bPolygon(verts, stripeColors[i % stripeColors.length], null, 0);
     }
 
     // Outer contour
-    stroke(PARAMS.lineColor);
-    strokeWeight(PARAMS.lineWeight);
-    noFill();
-    beginShape();
-    for (let i = 0; i < v.length; i++) vertex(v[i].x, v[i].y);
-    endShape(CLOSE);
+    let contour = [[v[0].x, v[0].y], [v[1].x, v[1].y], [v[2].x, v[2].y], [v[3].x, v[3].y]];
+    bPolygon(contour, null, PARAMS.lineColor, PARAMS.lineWeight);
 
   } else {
     // Concentric irregular bands
@@ -60,7 +57,6 @@ function generateStella() {
     let margin = s * 0.04;
     let allColors = [...palette, PARAMS.lineColor, PARAMS.grayColor, PARAMS.bgColor];
 
-    noStroke();
     for (let i = 0; i < numBands; i++) {
       let ratio = 1 - (i / numBands) * 0.88;
       let bw = (s - margin * 2) * ratio;
@@ -68,14 +64,16 @@ function generateStella() {
       let bx = (s - bw) / 2 + random(-s*0.02, s*0.02);
       let by = (s - bh) / 2 + random(-s*0.02, s*0.02);
 
-      fill(allColors[i % allColors.length]);
-      beginShape();
       let jt = s * 0.012;
-      vertex(bx + random(-jt, jt), by + random(-jt, jt));
-      vertex(bx + bw + random(-jt, jt), by + random(-jt, jt));
-      vertex(bx + bw + random(-jt, jt), by + bh + random(-jt, jt));
-      vertex(bx + random(-jt, jt), by + bh + random(-jt, jt));
-      endShape(CLOSE);
+      let verts = [
+        [bx + random(-jt, jt), by + random(-jt, jt)],
+        [bx + bw + random(-jt, jt), by + random(-jt, jt)],
+        [bx + bw + random(-jt, jt), by + bh + random(-jt, jt)],
+        [bx + random(-jt, jt), by + bh + random(-jt, jt)]
+      ];
+      bPolygon(verts, allColors[i % allColors.length], null, 0);
     }
   }
+
+  endBrushStyle();
 }

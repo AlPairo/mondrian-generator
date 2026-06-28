@@ -4,6 +4,8 @@
 
 function generateHuszar() {
   let s = PARAMS.canvasSize;
+  beginBrushStyle(s);
+
   let cells = [];
 
   // Lower split chance = calmer, fewer cells
@@ -32,23 +34,20 @@ function generateHuszar() {
     else if (cells.length > 2) cells[2].color = PARAMS.grayColor;
   }
 
-  background(PARAMS.bgColor);
+  bBackground(PARAMS.bgColor);
 
   // Draw colored cells
   for (let c of cells) {
     if (c.color) {
-      fill(c.color);
-      noStroke();
       let inset = PARAMS.lineWeight / 2;
-      rect(c.x + inset, c.y + inset, c.w - inset * 2, c.h - inset * 2);
+      bRect(c.x + inset, c.y + inset, c.w - inset * 2, c.h - inset * 2, c.color, null, 0);
     }
   }
 
   // Draw grid lines
-  stroke(PARAMS.lineColor);
-  strokeWeight(PARAMS.lineWeight);
   for (let c of cells) {
-    noFill();
-    rect(c.x, c.y, c.w, c.h);
+    bRect(c.x, c.y, c.w, c.h, null, PARAMS.lineColor, PARAMS.lineWeight);
   }
+
+  endBrushStyle();
 }

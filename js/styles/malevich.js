@@ -4,7 +4,7 @@
 
 function generateMalevich() {
   let s = PARAMS.canvasSize;
-  background(PARAMS.bgColor);
+  beginBrushStyle(s);
 
   let numForms = floor(random(4, 10));
   let forms = [];
@@ -45,31 +45,30 @@ function generateMalevich() {
   // Sort by size: draw larger ones first (painter's algorithm)
   forms.sort((a, b) => (b.w * b.h) - (a.w * a.h));
 
-  noStroke();
-  for (let f of forms) {
-    fill(f.color);
+  bBackground(PARAMS.bgColor);
 
+  for (let f of forms) {
     if (f.type === 'square' || f.type === 'rectangle' || f.type === 'thin_rect') {
-      rect(f.x, f.y, f.w, f.h);
+      bRect(f.x, f.y, f.w, f.h, f.color, null, 0);
     } else if (f.type === 'circle') {
-      ellipse(f.x + f.w/2, f.y + f.w/2, f.w);
+      bEllipse(f.x + f.w/2, f.y + f.w/2, f.w, f.w, f.color, null, 0);
     } else if (f.type === 'cross') {
       let t = f.w * 0.25;
-      rect(f.x + f.w*0.375, f.y, t, f.h);
-      rect(f.x, f.y + f.h*0.375, f.w, t);
+      bRect(f.x + f.w*0.375, f.y, t, f.h, f.color, null, 0);
+      bRect(f.x, f.y + f.h*0.375, f.w, t, f.color, null, 0);
     }
   }
 
   // Optional thin trail lines suggesting motion
-  stroke(PARAMS.lineColor);
-  strokeWeight(1.5);
   for (let f of forms) {
     if (random() < 0.35) {
       let len = random(30, 120);
       let angle = random(TWO_PI);
       let cx = f.x + f.w/2;
       let cy = f.y + f.h/2;
-      line(cx, cy, cx + cos(angle)*len, cy + sin(angle)*len);
+      bLine(cx, cy, cx + cos(angle)*len, cy + sin(angle)*len, PARAMS.lineColor, 1.5);
     }
   }
+
+  endBrushStyle();
 }

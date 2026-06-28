@@ -4,7 +4,7 @@
 
 function generateLissitzky() {
   let s = PARAMS.canvasSize;
-  background(PARAMS.bgColor);
+  beginBrushStyle(s);
 
   let numPlanes = floor(random(6, 14));
   let planes = [];
@@ -27,38 +27,38 @@ function generateLissitzky() {
   if (!hasRed && planes.length > 0) planes[0].color = PARAMS.red;
   if (!hasBlack && planes.length > 1) planes[1].color = PARAMS.lineColor;
 
+  bBackground(PARAMS.bgColor);
+
   // Draw from back to front
   for (let p of planes) {
-    fill(p.color);
-    noStroke();
-    beginShape();
-    vertex(p.x, p.y);
-    vertex(p.x + p.w, p.y);
-    vertex(p.x + p.w + p.h * p.shear, p.y + p.h);
-    vertex(p.x + p.h * p.shear, p.y + p.h);
-    endShape(CLOSE);
+    let verts = [
+      [p.x, p.y],
+      [p.x + p.w, p.y],
+      [p.x + p.w + p.h * p.shear, p.y + p.h],
+      [p.x + p.h * p.shear, p.y + p.h]
+    ];
+    bPolygon(verts, p.color, null, 0);
   }
 
   // Thin construction lines
-  stroke(PARAMS.lineColor);
-  strokeWeight(1);
   for (let i = 0; i < 6; i++) {
     let x = random(s);
-    line(x, 0, x + random(-60, 60), s);
+    bLine(x, 0, x + random(-60, 60), s, PARAMS.lineColor, 1);
   }
   for (let i = 0; i < 4; i++) {
     let y = random(s);
-    line(0, y, s, y + random(-60, 60));
+    bLine(0, y, s, y + random(-60, 60), PARAMS.lineColor, 1);
   }
 
   // 1-2 circles breaking the rectilinear rhythm
-  noStroke();
   let numCircles = floor(random(1, 3));
   for (let i = 0; i < numCircles; i++) {
-    fill(random([PARAMS.red, PARAMS.blue, PARAMS.yellow]));
+    let col = random([PARAMS.red, PARAMS.blue, PARAMS.yellow]);
     let cx = random(s * 0.15, s * 0.85);
     let cy = random(s * 0.15, s * 0.85);
     let r = random(s * 0.03, s * 0.1);
-    ellipse(cx, cy, r * 2);
+    bEllipse(cx, cy, r * 2, r * 2, col, null, 0);
   }
+
+  endBrushStyle();
 }

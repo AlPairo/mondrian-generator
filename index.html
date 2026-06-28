@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Geometric Abstraction Generator</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.3/p5.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/p5.brush@latest"></script>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -245,6 +246,8 @@ Orthogonal black lines, identical to Mondrian. Rectangular cells with one domina
 
   <!-- Load shared utilities first -->
   <script src="js/shared.js"></script>
+  <!-- Load brush integration before styles -->
+  <script src="js/brush-integration.js"></script>
   <!-- Load all style implementations -->
   <script src="js/styles/mondrian.js"></script>
   <script src="js/styles/vandoesburg.js"></script>

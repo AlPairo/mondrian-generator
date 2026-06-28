@@ -6,9 +6,11 @@
 
 function generateVanDoesburg() {
   let s = PARAMS.canvasSize;
+  beginBrushStyle(s);
+
   let palette = getPalette();
 
-  background(PARAMS.bgColor);
+  bBackground(PARAMS.bgColor);
 
   // === CONFIGURATION ===
   // Shear amount controls how "diagonal" the grid feels
@@ -49,11 +51,10 @@ function generateVanDoesburg() {
 
   // === PHASE 1: DRAW COLORED CELLS ===
   // These are parallelograms, not rectangles
-  noStroke();
   for (let cell of cells) {
     if (cell.color) {
-      fill(cell.color);
-      drawShearedCell(cell.baseX, cell.baseY, cell.w, cell.h, shearAmount);
+      let verts = shearedCellVerts(cell.baseX, cell.baseY, cell.w, cell.h, shearAmount);
+      bPolygon(verts, cell.color, null, 0);
     }
   }
 
@@ -66,31 +67,24 @@ function generateVanDoesburg() {
   let diagLen = s * 1.6;
 
   // Draw the diagonal slightly behind the grid lines but visible
-  stroke(PARAMS.lineColor);
-  strokeWeight(PARAMS.lineWeight * 2.2);
-  drawingContext.setLineDash([]);
-  line(
-    diagCX - cos(diagAngle) * diagLen,
-    diagCY - sin(diagAngle) * diagLen,
-    diagCX + cos(diagAngle) * diagLen,
-    diagCY + sin(diagAngle) * diagLen
-  );
+  let dx1 = diagCX - cos(diagAngle) * diagLen;
+  let dy1 = diagCY - sin(diagAngle) * diagLen;
+  let dx2 = diagCX + cos(diagAngle) * diagLen;
+  let dy2 = diagCY + sin(diagAngle) * diagLen;
+  bLine(dx1, dy1, dx2, dy2, PARAMS.lineColor, PARAMS.lineWeight * 2.2);
 
   // === PHASE 3: DRAW SHEARED GRID LINES ===
   // Vertical lines become diagonal (due to shear)
-  stroke(PARAMS.lineColor);
-  strokeWeight(PARAMS.lineWeight);
-
   for (let c = 0; c <= numCols; c++) {
     let x = c * cellW;
     // A vertical line in sheared space goes from (x, 0) to (x + s*shear, s)
-    line(x, 0, x + s * shearAmount, s);
+    bLine(x, 0, x + s * shearAmount, s, PARAMS.lineColor, PARAMS.lineWeight);
   }
 
   // Horizontal lines stay horizontal
   for (let r = 0; r <= numRows; r++) {
     let y = r * cellH;
-    line(0, y, s, y);
+    bLine(0, y, s, y, PARAMS.lineColor, PARAMS.lineWeight);
   }
 
   // === PHASE 4: DIAGONAL ACCENT BANDS ===
@@ -100,30 +94,20 @@ function generateVanDoesburg() {
     let bandWidth = random(s * 0.06, s * 0.15);
     let bandColor = random(palette);
 
-    // Draw diagonal band by creating a polygon
-    fill(bandColor);
-    noStroke();
-
-    let bx1 = diagCX - cos(diagAngle) * diagLen;
-    let by1 = diagCY - sin(diagAngle) * diagLen;
-    let bx2 = diagCX + cos(diagAngle) * diagLen;
-    let by2 = diagCY + sin(diagAngle) * diagLen;
-
     // Perpendicular offset for band width
     let perpX = -sin(diagAngle) * bandWidth * 0.5;
     let perpY = cos(diagAngle) * bandWidth * 0.5;
 
-    beginShape();
-    vertex(bx1 + perpX, by1 + perpY);
-    vertex(bx2 + perpX, by2 + perpY);
-    vertex(bx2 - perpX, by2 - perpY);
-    vertex(bx1 - perpX, by1 - perpY);
-    endShape(CLOSE);
+    let bandVerts = [
+      [dx1 + perpX, dy1 + perpY],
+      [dx2 + perpX, dy2 + perpY],
+      [dx2 - perpX, dy2 - perpY],
+      [dx1 - perpX, dy1 - perpY]
+    ];
+    bPolygon(bandVerts, bandColor, null, 0);
 
     // Redraw diagonal line on top of band (so it stays visible)
-    stroke(PARAMS.lineColor);
-    strokeWeight(PARAMS.lineWeight * 1.5);
-    line(bx1, by1, bx2, by2);
+    bLine(dx1, dy1, dx2, dy2, PARAMS.lineColor, PARAMS.lineWeight * 1.5);
   }
 
   // === PHASE 5: CORNER TRIANGLES ===
@@ -133,32 +117,17 @@ function generateVanDoesburg() {
   for (let i = 0; i < cornerTriangles; i++) {
     let corner = floor(random(4)); // 0=TL, 1=TR, 2=BR, 3=BL
     let triSize = random(s * 0.08, s * 0.2);
-    fill(random(palette));
-    noStroke();
+    let col = random(palette);
 
-    beginShape();
     if (corner === 0) {
-      // Top-left
-      vertex(0, 0);
-      vertex(triSize, 0);
-      vertex(0, triSize);
+      bTriangle(0, 0, triSize, 0, 0, triSize, col, null, 0);
     } else if (corner === 1) {
-      // Top-right
-      vertex(s, 0);
-      vertex(s - triSize, 0);
-      vertex(s, triSize);
+      bTriangle(s, 0, s - triSize, 0, s, triSize, col, null, 0);
     } else if (corner === 2) {
-      // Bottom-right
-      vertex(s, s);
-      vertex(s - triSize, s);
-      vertex(s, s - triSize);
+      bTriangle(s, s, s - triSize, s, s, s - triSize, col, null, 0);
     } else {
-      // Bottom-left
-      vertex(0, s);
-      vertex(triSize, s);
-      vertex(0, s - triSize);
+      bTriangle(0, s, triSize, s, 0, s - triSize, col, null, 0);
     }
-    endShape(CLOSE);
   }
 
   // === PHASE 6: DOTTED ACCENT (optional, rare) ===
@@ -169,23 +138,21 @@ function generateVanDoesburg() {
       let ds = random(s * 0.02, s * 0.05);
       let dx = random(s * 0.1, s * 0.9);
       let dy = random(s * 0.1, s * 0.9);
-      fill(random(palette));
-      noStroke();
-      rect(dx - ds/2, dy - ds/2, ds, ds);
+      bRect(dx - ds/2, dy - ds/2, ds, ds, random(palette), null, 0);
     }
   }
+
+  endBrushStyle();
 }
 
-// Draw a parallelogram cell using vertical shear
-// The top edge is shifted by (y * shear), bottom edge by ((y+h) * shear)
-function drawShearedCell(x, y, w, h, shear) {
+// Return vertices for a parallelogram cell using vertical shear
+function shearedCellVerts(x, y, w, h, shear) {
   let shiftTop = y * shear;
   let shiftBottom = (y + h) * shear;
-
-  beginShape();
-  vertex(x + shiftTop, y);
-  vertex(x + w + shiftTop, y);
-  vertex(x + w + shiftBottom, y + h);
-  vertex(x + shiftBottom, y + h);
-  endShape(CLOSE);
+  return [
+    [x + shiftTop, y],
+    [x + w + shiftTop, y],
+    [x + w + shiftBottom, y + h],
+    [x + shiftBottom, y + h]
+  ];
 }

@@ -4,7 +4,7 @@
 
 function generateVanDerLeck() {
   let s = PARAMS.canvasSize;
-  background(PARAMS.bgColor);
+  beginBrushStyle(s);
 
   let margin = s * 0.06;
   let numShapes = floor(random(4, 9));
@@ -25,7 +25,6 @@ function generateVanDerLeck() {
     if (random() < 0.7) col = random(palette);
 
     // Try to avoid too much overlap by checking against existing shapes
-    let attempts = 0;
     let tooMuchOverlap = false;
     for (let existing of shapes) {
       let dx = Math.abs((x + w/2) - (existing.x + existing.w/2));
@@ -36,7 +35,7 @@ function generateVanDerLeck() {
       }
     }
 
-    if (!tooMuchOverlap || attempts > 20) {
+    if (!tooMuchOverlap) {
       shapes.push({ x, y, w, h, color: col });
     }
   }
@@ -55,33 +54,29 @@ function generateVanDerLeck() {
   // Sort by size: larger ones first (appear behind)
   shapes.sort((a, b) => (b.w * b.h) - (a.w * a.h));
 
+  bBackground(PARAMS.bgColor);
+
   for (let sh of shapes) {
     if (sh.color === PARAMS.bgColor) {
       // This is a "negative" shape: draw outline only
-      noFill();
-      stroke(PARAMS.lineColor);
-      strokeWeight(PARAMS.lineWeight * 1.8);
-      rect(sh.x, sh.y, sh.w, sh.h);
+      bRect(sh.x, sh.y, sh.w, sh.h, null, PARAMS.lineColor, PARAMS.lineWeight * 1.8);
     } else {
       // Colored shape with thick outline
-      fill(sh.color);
-      stroke(PARAMS.lineColor);
-      strokeWeight(PARAMS.lineWeight * 1.8);
-      rect(sh.x, sh.y, sh.w, sh.h);
+      bRect(sh.x, sh.y, sh.w, sh.h, sh.color, PARAMS.lineColor, PARAMS.lineWeight * 1.8);
     }
   }
 
   // Add some thin connecting lines occasionally (van der Leck's early work)
   if (random() < 0.4) {
-    stroke(PARAMS.lineColor);
-    strokeWeight(PARAMS.lineWeight * 0.6);
     let numLines = floor(random(1, 4));
     for (let i = 0; i < numLines; i++) {
       let sh1 = random(shapes);
       let sh2 = random(shapes);
       if (sh1 !== sh2) {
-        line(sh1.x + sh1.w/2, sh1.y + sh1.h/2, sh2.x + sh2.w/2, sh2.y + sh2.h/2);
+        bLine(sh1.x + sh1.w/2, sh1.y + sh1.h/2, sh2.x + sh2.w/2, sh2.y + sh2.h/2, PARAMS.lineColor, PARAMS.lineWeight * 0.6);
       }
     }
   }
+
+  endBrushStyle();
 }

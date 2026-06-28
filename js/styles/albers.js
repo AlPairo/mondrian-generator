@@ -4,7 +4,7 @@
 
 function generateAlbers() {
   let s = PARAMS.canvasSize;
-  background(PARAMS.bgColor);
+  beginBrushStyle(s);
 
   let margin = s * 0.06;
   let available = s - margin * 2;
@@ -37,12 +37,14 @@ function generateAlbers() {
     }
   }
 
-  noStroke();
+  bBackground(PARAMS.bgColor);
+
   for (let i = 0; i < numSquares; i++) {
     let sz = sizes[i];
     let x = (s - sz) / 2;
     let y = (s - sz) / 2;
-    fill(colors[i]);
-    rect(x, y, sz, sz);
+    bRect(x, y, sz, sz, colors[i], null, 0);
   }
+
+  endBrushStyle();
 }

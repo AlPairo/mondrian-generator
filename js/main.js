@@ -19,10 +19,12 @@ function generateStyle() {
 
 function setup() {
   PARAMS = getDefaultParams();
-  let cnv = createCanvas(PARAMS.canvasSize, PARAMS.canvasSize);
+  let cnv = createCanvas(PARAMS.canvasSize, PARAMS.canvasSize, WEBGL);
   cnv.parent('canvas-container');
   pixelDensity(1);
   colorMode(RGB, 255, 255, 255, 255);
+
+  initBrush();
 
   randomSeed(PARAMS.seed);
   noiseSeed(PARAMS.seed);

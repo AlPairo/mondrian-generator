@@ -4,7 +4,7 @@
 
 function generateLeWitt() {
   let s = PARAMS.canvasSize;
-  background(PARAMS.bgColor);
+  beginBrushStyle(s);
 
   let cols = floor(random(4, 8));
   let rows = floor(random(4, 8));
@@ -28,13 +28,13 @@ function generateLeWitt() {
     coloredCells.push({ r: floor(random(rows)), c: floor(random(cols)) });
   }
 
+  bBackground(PARAMS.bgColor);
+
   // Draw colored cells
-  noStroke();
   for (let cc of coloredCells) {
     let x = gap + cc.c * (cellW + gap);
     let y = gap + cc.r * (cellH + gap);
-    fill(pickColorForced());
-    rect(x, y, cellW, cellH);
+    bRect(x, y, cellW, cellH, pickColorForced(), null, 0);
   }
 
   // Draw line patterns in each cell
@@ -50,36 +50,35 @@ function generateLeWitt() {
         usedTypes.push(random(lineTypes));
       }
 
-      stroke(PARAMS.lineColor);
-      strokeWeight(max(1, PARAMS.lineWeight * 0.35));
+      let lw = max(1, PARAMS.lineWeight * 0.35);
 
       for (let type of usedTypes) {
         if (type === 'vertical') {
           let n = floor(random(2, 6));
           for (let i = 1; i < n; i++) {
             let lx = x + (cellW / n) * i;
-            line(lx, y, lx, y + cellH);
+            bLine(lx, y, lx, y + cellH, PARAMS.lineColor, lw);
           }
         } else if (type === 'horizontal') {
           let n = floor(random(2, 6));
           for (let i = 1; i < n; i++) {
             let ly = y + (cellH / n) * i;
-            line(x, ly, x + cellW, ly);
+            bLine(x, ly, x + cellW, ly, PARAMS.lineColor, lw);
           }
         } else if (type === 'diag1') {
-          line(x, y, x + cellW, y + cellH);
+          bLine(x, y, x + cellW, y + cellH, PARAMS.lineColor, lw);
         } else if (type === 'diag2') {
-          line(x + cellW, y, x, y + cellH);
+          bLine(x + cellW, y, x, y + cellH, PARAMS.lineColor, lw);
         } else if (type === 'cross') {
-          line(x, y, x + cellW, y + cellH);
-          line(x + cellW, y, x, y + cellH);
+          bLine(x, y, x + cellW, y + cellH, PARAMS.lineColor, lw);
+          bLine(x + cellW, y, x, y + cellH, PARAMS.lineColor, lw);
         } else if (type === 'grid') {
           let n = floor(random(2, 4));
           for (let i = 1; i < n; i++) {
             let lx = x + (cellW / n) * i;
-            line(lx, y, lx, y + cellH);
+            bLine(lx, y, lx, y + cellH, PARAMS.lineColor, lw);
             let ly = y + (cellH / n) * i;
-            line(x, ly, x + cellW, ly);
+            bLine(x, ly, x + cellW, ly, PARAMS.lineColor, lw);
           }
         }
       }
@@ -87,14 +86,14 @@ function generateLeWitt() {
   }
 
   // Outer grid lines
-  stroke(PARAMS.lineColor);
-  strokeWeight(PARAMS.lineWeight);
   for (let c = 0; c <= cols; c++) {
     let x = c * (cellW + gap) + gap / 2;
-    line(x, 0, x, s);
+    bLine(x, 0, x, s, PARAMS.lineColor, PARAMS.lineWeight);
   }
   for (let r = 0; r <= rows; r++) {
     let y = r * (cellH + gap) + gap / 2;
-    line(0, y, s, y);
+    bLine(0, y, s, y, PARAMS.lineColor, PARAMS.lineWeight);
   }
+
+  endBrushStyle();
 }

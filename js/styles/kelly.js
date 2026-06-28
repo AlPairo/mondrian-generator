@@ -5,10 +5,12 @@
 
 function generateKelly() {
   let s = PARAMS.canvasSize;
+  beginBrushStyle(s);
+
   let mode = random() > 0.45 ? 'single' : 'panels';
   let palette = getPalette();
 
-  background(PARAMS.bgColor);
+  bBackground(PARAMS.bgColor);
 
   if (mode === 'single') {
     // ONE dominant shape occupying 35-70% of canvas
@@ -39,13 +41,11 @@ function generateKelly() {
     }
 
     let col = random(palette);
-    fill(col);
-    noStroke();
 
     if (type === 'circle') {
-      ellipse(x + w/2, y + h/2, w);
+      bEllipse(x + w/2, y + h/2, w, h, col, null, 0);
     } else {
-      rect(x, y, w, h);
+      bRect(x, y, w, h, col, null, 0);
     }
 
     // Occasionally add a smaller accent shape
@@ -56,8 +56,7 @@ function generateKelly() {
       let ay = random(s * 0.05, s * 0.95 - ah);
       let acol = random(palette.filter(c => c !== col));
       if (acol) {
-        fill(acol);
-        rect(ax, ay, aw, ah);
+        bRect(ax, ay, aw, ah, acol, null, 0);
       }
     }
 
@@ -70,15 +69,15 @@ function generateKelly() {
     let cellH = (s - gap * (rows + 1)) / rows;
     let allColors = [...palette, PARAMS.bgColor, PARAMS.lineColor];
 
-    noStroke();
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
         let x = gap + c * (cellW + gap);
         let y = gap + r * (cellH + gap);
         let col = random(allColors);
-        fill(col);
-        rect(x, y, cellW, cellH);
+        bRect(x, y, cellW, cellH, col, null, 0);
       }
     }
   }
+
+  endBrushStyle();
 }
