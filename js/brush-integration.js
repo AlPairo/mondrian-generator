@@ -8,7 +8,10 @@ function hasBrush() {
 
 function initBrush() {
   if (hasBrush()) {
-    brush.load();
+    // p5.brush auto-initializes on createCanvas(WEBGL).
+    // brush.load() is only needed for offscreen buffers.
+    brush.noStroke();
+    brush.noFill();
   }
 }
 
